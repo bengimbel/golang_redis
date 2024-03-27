@@ -77,7 +77,7 @@ func ConfigureLatLonRequest(city string) *httpWeatherClient.HttpConfig {
 			},
 			{
 				Key:   "appid",
-				Value: "<API KEY HERE",
+				Value: "<API KEY HERE>",
 			},
 		},
 	}
@@ -97,7 +97,7 @@ func ConfigureCityCoordinatesRequest(coordinates model.WeatherCoordinates) *http
 			},
 			{
 				Key:   "appid",
-				Value: "<API KEY HERE",
+				Value: "<API KEY HERE>",
 			},
 		},
 	}
