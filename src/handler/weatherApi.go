@@ -79,6 +79,9 @@ func (wh *WeatherHandler) FetchWeatherByCity(config *httpWeatherClient.HttpConfi
 	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherResponse); err != nil {
 		return weatherResponse, fmt.Errorf("Error fetching city by coordinates: %s", err)
 	}
+
+	// Just saving and returning first entry in the list of results
+	weatherResponse.List = []model.List{weatherResponse.List[0]}
 	return weatherResponse, nil
 }
 
