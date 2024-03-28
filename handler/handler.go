@@ -47,6 +47,7 @@ func (wh *WeatherHandler) HandleGetWeather(w http.ResponseWriter, r *http.Reques
 		RenderInternalServerError(w, err)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 	w.WriteHeader(http.StatusOK)
@@ -112,6 +113,7 @@ func BuildCityWeatherRequest(coordinates model.WeatherCoordinates) *httpWeatherC
 
 func (wh *WeatherHandler) FetchCoordinates(config *httpWeatherClient.HttpConfig) ([]model.WeatherCoordinates, error) {
 	weatherCoordinates := []model.WeatherCoordinates{}
+
 	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherCoordinates); err != nil {
 		return weatherCoordinates, fmt.Errorf("Error fetching city coordinates by name: %w", err)
 	} else if len(weatherCoordinates) == 0 {
@@ -122,6 +124,7 @@ func (wh *WeatherHandler) FetchCoordinates(config *httpWeatherClient.HttpConfig)
 
 func (wh *WeatherHandler) FetchWeatherByCity(config *httpWeatherClient.HttpConfig) (model.WeatherResponse, error) {
 	weatherResponse := model.WeatherResponse{}
+
 	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherResponse); err != nil {
 		return weatherResponse, fmt.Errorf("Error fetching city by coordinates: %s", err)
 	}
