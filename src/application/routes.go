@@ -3,8 +3,8 @@ package application
 import (
 	"time"
 
-	"github.com/bengimbel/go_redis_api/handler"
-	"github.com/bengimbel/go_redis_api/repository"
+	"github.com/bengimbel/go_redis_api/src/handler"
+	"github.com/bengimbel/go_redis_api/src/repository"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/cache/v9"

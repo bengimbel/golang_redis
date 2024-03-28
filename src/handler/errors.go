@@ -23,9 +23,21 @@ func NewError(code int, message string) *Error {
 	}
 }
 
-// Render a basic http error response
+// Render http internal server error response
 func RenderInternalServerError(w http.ResponseWriter, err error) {
 	code := http.StatusInternalServerError
+	errResponse := NewError(code, err.Error())
+	result, _ := json.Marshal(errResponse)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(result)
+	return
+}
+
+// Render a basic http error response
+func RenderBadRequestError(w http.ResponseWriter, err error) {
+	code := http.StatusBadRequest
 	errResponse := NewError(code, err.Error())
 	result, _ := json.Marshal(errResponse)
 

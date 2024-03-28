@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bengimbel/go_redis_api/httpWeatherClient"
-	"github.com/bengimbel/go_redis_api/model"
-	"github.com/bengimbel/go_redis_api/repository"
+	"github.com/bengimbel/go_redis_api/src/httpWeatherClient"
+	"github.com/bengimbel/go_redis_api/src/model"
+	"github.com/bengimbel/go_redis_api/src/repository"
 )
 
 type WeatherHandler struct {
@@ -23,7 +23,7 @@ func (wh *WeatherHandler) RetrieveAndCacheWeather(ctx context.Context, city stri
 	// Fetches weather
 	result, err := wh.FetchWeather(city)
 	if err != nil {
-		fmt.Println("Error fetching city from redis cache", err)
+		fmt.Println("Error fetching city", err)
 		return model.WeatherResponse{}, err
 	}
 	// Inserts into redis cache
@@ -65,7 +65,7 @@ func (wh *WeatherHandler) HandleRetrieveWeather(w http.ResponseWriter, r *http.R
 	} else {
 		value, err := wh.RetrieveAndCacheWeather(ctx, city)
 		if err != nil {
-			RenderInternalServerError(w, err)
+			RenderBadRequestError(w, err)
 			return
 		}
 		result = value

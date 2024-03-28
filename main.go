@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/bengimbel/go_redis_api/application"
+	"github.com/bengimbel/go_redis_api/src/application"
 )
 
 // Main entry point for our application.

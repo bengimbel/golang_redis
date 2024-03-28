@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bengimbel/go_redis_api/httpWeatherClient"
-	"github.com/bengimbel/go_redis_api/model"
+	"github.com/bengimbel/go_redis_api/src/httpWeatherClient"
+	"github.com/bengimbel/go_redis_api/src/model"
 )
 
 const (

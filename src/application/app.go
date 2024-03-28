@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bengimbel/go_redis_api/httpWeatherClient"
+	"github.com/bengimbel/go_redis_api/src/httpWeatherClient"
 	"github.com/redis/go-redis/v9"
 )
 

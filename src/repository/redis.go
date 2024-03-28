@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bengimbel/go_redis_api/model"
+	"github.com/bengimbel/go_redis_api/src/model"
 	"github.com/go-redis/cache/v9"
 )
 
