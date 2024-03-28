@@ -58,7 +58,7 @@ func (hwc *HttpWeatherClient) MakeWeatherRequest(config *HttpConfig, responseStr
 	defer res.Body.Close()
 
 	if err := json.NewDecoder(res.Body).Decode(&responseStruct); err != nil {
-		return fmt.Errorf("Error decoding weather dataaaa: %s", err)
+		return fmt.Errorf("Error decoding weather data: %s", err)
 	}
 
 	return nil

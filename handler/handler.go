@@ -4,11 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/bengimbel/go_redis_api/httpWeatherClient"
 	"github.com/bengimbel/go_redis_api/model"
 	"github.com/bengimbel/go_redis_api/repository"
+)
+
+const (
+	FETCH_COORDIANTES_PATH string = "/geo/1.0/direct"
+	FETCH_WEATHER_PATH     string = "/data/2.5/forecast"
+	QUERY_PARAM_LAT        string = "lat"
+	QUERY_PARAM_LON        string = "lon"
+	QUERY_PARAM_Q          string = "q"
+	APP_ID_KEY             string = "appid"
+	APIKEY                 string = "APIKEY"
 )
 
 type WeatherHandler struct {
@@ -17,15 +28,12 @@ type WeatherHandler struct {
 }
 
 func (wh *WeatherHandler) HandleGetWeather(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	city := strings.ToLower(r.URL.Query().Get("city"))
-	httpConfig := ConfigureLatLonRequest(city)
 
-	result, err := wh.FetchWeather(httpConfig)
+	result, err := wh.FetchWeather(city)
 	if err != nil {
 		fmt.Println("Error fetching city's weather", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		RenderInternalServerError(w, err)
 		return
 	}
 
@@ -36,83 +44,98 @@ func (wh *WeatherHandler) HandleGetWeather(w http.ResponseWriter, r *http.Reques
 	response, err := json.Marshal(&result)
 	if err != nil {
 		fmt.Println("Error decoding response to json", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		RenderInternalServerError(w, err)
 		return
 	}
-
+	w.Header().Set("Content-Type", "application/json")
 	w.Write(response)
 	w.WriteHeader(http.StatusOK)
 }
 
 func (wh *WeatherHandler) HandleGetCachedWeather(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	city := strings.ToLower(r.URL.Query().Get("city"))
 
 	result, err := wh.Repo.FindByCity(r.Context(), city)
 	if err != nil {
 		fmt.Println("Error fetching city from redis cache", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		RenderInternalServerError(w, err)
 		return
 	}
 
 	response, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println("Error decoding response to json", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		RenderInternalServerError(w, err)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
 }
 
-func ConfigureLatLonRequest(city string) *httpWeatherClient.HttpConfig {
+func BuildLatLonRequest(city string) *httpWeatherClient.HttpConfig {
 	return &httpWeatherClient.HttpConfig{
-		Path: "/geo/1.0/direct",
+		Path: FETCH_COORDIANTES_PATH,
 		Query: []httpWeatherClient.QueryParams{
 			{
-				Key:   "q",
+				Key:   QUERY_PARAM_Q,
 				Value: city,
 			},
 			{
-				Key:   "appid",
-				Value: "<API KEY HERE>",
+				Key:   APP_ID_KEY,
+				Value: os.Getenv(APIKEY),
 			},
 		},
 	}
 }
 
-func ConfigureCityCoordinatesRequest(coordinates model.WeatherCoordinates) *httpWeatherClient.HttpConfig {
+func BuildCityWeatherRequest(coordinates model.WeatherCoordinates) *httpWeatherClient.HttpConfig {
 	return &httpWeatherClient.HttpConfig{
-		Path: "/data/2.5/forecast",
+		Path: FETCH_WEATHER_PATH,
 		Query: []httpWeatherClient.QueryParams{
 			{
-				Key:   "lat",
+				Key:   QUERY_PARAM_LAT,
 				Value: fmt.Sprintf("%f", coordinates.Lat),
 			},
 			{
-				Key:   "lon",
+				Key:   QUERY_PARAM_LON,
 				Value: fmt.Sprintf("%f", coordinates.Lon),
 			},
 			{
-				Key:   "appid",
-				Value: "<API KEY HERE>",
+				Key:   APP_ID_KEY,
+				Value: os.Getenv(APIKEY),
 			},
 		},
 	}
 }
 
-func (wh *WeatherHandler) FetchWeather(config *httpWeatherClient.HttpConfig) (model.WeatherResponse, error) {
+func (wh *WeatherHandler) FetchCoordinates(config *httpWeatherClient.HttpConfig) ([]model.WeatherCoordinates, error) {
 	weatherCoordinates := []model.WeatherCoordinates{}
-	weatherResponse := model.WeatherResponse{}
-	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherCoordinates); err != nil || len(weatherCoordinates) == 0 {
-		return weatherResponse, fmt.Errorf("Error fetching city coordinates by name: %w", err)
+	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherCoordinates); err != nil {
+		return weatherCoordinates, fmt.Errorf("Error fetching city coordinates by name: %w", err)
+	} else if len(weatherCoordinates) == 0 {
+		return weatherCoordinates, fmt.Errorf("Error fetching city coordinates by name: %s", config.Query[0].Value)
 	}
+	return weatherCoordinates, nil
+}
 
-	httpWeatherRequestConfig := ConfigureCityCoordinatesRequest(weatherCoordinates[0])
-	if err := wh.WeatherHTTPClient.MakeWeatherRequest(httpWeatherRequestConfig, &weatherResponse); err != nil {
+func (wh *WeatherHandler) FetchWeatherByCity(config *httpWeatherClient.HttpConfig) (model.WeatherResponse, error) {
+	weatherResponse := model.WeatherResponse{}
+	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherResponse); err != nil {
 		return weatherResponse, fmt.Errorf("Error fetching city by coordinates: %s", err)
 	}
 	return weatherResponse, nil
+}
+
+func (wh *WeatherHandler) FetchWeather(city string) (model.WeatherResponse, error) {
+	if coordinates, err := wh.FetchCoordinates(BuildLatLonRequest(city)); err == nil && len(coordinates) > 0 {
+		if weatherResponse, err := wh.FetchWeatherByCity(BuildCityWeatherRequest(coordinates[0])); err == nil {
+			return weatherResponse, nil
+		} else {
+			return model.WeatherResponse{}, err
+		}
+	} else {
+		return model.WeatherResponse{}, err
+	}
 }

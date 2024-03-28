@@ -12,6 +12,8 @@ services:
     links:
       - redis
     container_name: go_redis_api
+    env_file:
+      - .env
   redis:
     image: "redis:latest"
     ports:
