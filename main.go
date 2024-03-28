@@ -9,6 +9,8 @@ import (
 	"github.com/bengimbel/go_redis_api/application"
 )
 
+// Main entry point for our application.
+// Creating a new app intance, and starting the app
 func main() {
 	app := application.NewApp()
 

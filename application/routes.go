@@ -1,12 +1,16 @@
 package application
 
 import (
+	"time"
+
 	"github.com/bengimbel/go_redis_api/handler"
 	"github.com/bengimbel/go_redis_api/repository"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-redis/cache/v9"
 )
 
+// Load routes and bind them to our App struct.
 func (a *App) LoadApiRoutes() {
 	router := chi.NewRouter()
 	router.Use(middleware.Logger)
@@ -16,14 +20,22 @@ func (a *App) LoadApiRoutes() {
 	a.Router = router
 }
 
+// Setting Cache to use local in-process storage
+// to cache the small subset of recent keys.
+// Key/Values use LRU (least recently used)
+// for 1 minute in local in-process storage
+// before looking into the Redis Cache.
 func (a *App) LoadWeatherRouteGroup(router chi.Router) {
 	handler := handler.WeatherHandler{
 		Repo: &repository.RedisRepo{
-			Client: a.Rdb,
+			Cache: cache.New(&cache.Options{
+				Redis:      a.Rdb,
+				LocalCache: cache.NewTinyLFU(1000, 30*time.Second),
+			}),
 		},
 		WeatherHTTPClient: a.WeatherHTTPClient,
 	}
 
-	router.Get("/weather", handler.HandleGetWeather)
-	router.Get("/weather/cached", handler.HandleGetCachedWeather)
+	router.Get("/weather", handler.HandleFetchWeather)
+	router.Get("/weather/cached", handler.HandleRetrieveCachedWeather)
 }

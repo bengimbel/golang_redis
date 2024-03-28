@@ -16,6 +16,7 @@ type App struct {
 	WeatherHTTPClient *httpWeatherClient.HttpWeatherClient
 }
 
+// Create a new App instance
 func NewApp() *App {
 	app := &App{
 		Rdb: redis.NewClient(&redis.Options{
@@ -28,17 +29,20 @@ func NewApp() *App {
 	return app
 }
 
+// Start our App
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: a.Router,
 	}
 
+	// Ping Redis to make sure we are connected
 	err := a.Rdb.Ping(ctx).Err()
 	if err != nil {
 		return fmt.Errorf("Server failed to connect to redis: %w", err)
 	}
 
+	// Gracefully shut down redis.
 	defer func() {
 		if err := a.Rdb.Close(); err != nil {
 			fmt.Println("Failed to close redis", err)
@@ -59,6 +63,8 @@ func (a *App) Start(ctx context.Context) error {
 		close(channel)
 	}()
 
+	// If there is an error from channel, select it and
+	// handle it gracefully
 	select {
 	case err = <-channel:
 		return err

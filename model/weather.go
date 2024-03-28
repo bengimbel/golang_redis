@@ -9,7 +9,7 @@ type WeatherCoordinates struct {
 	State   string  `json:"state"`
 }
 
-// Structs to get weather by coordinates
+// Structs (and nested structs) to get weather by coordinates
 type Coord struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`

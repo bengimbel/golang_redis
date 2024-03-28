@@ -15,6 +15,7 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// Function to create new error instance
 func NewError(code int, message string) *Error {
 	return &Error{
 		Code:    code,
@@ -22,6 +23,7 @@ func NewError(code int, message string) *Error {
 	}
 }
 
+// Render a basic http error response
 func RenderInternalServerError(w http.ResponseWriter, err error) {
 	code := http.StatusInternalServerError
 	errResponse := NewError(code, err.Error())
