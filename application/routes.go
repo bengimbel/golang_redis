@@ -30,12 +30,12 @@ func (a *App) LoadWeatherRouteGroup(router chi.Router) {
 		Repo: &repository.RedisRepo{
 			Cache: cache.New(&cache.Options{
 				Redis:      a.Rdb,
-				LocalCache: cache.NewTinyLFU(1000, 30*time.Second),
+				LocalCache: cache.NewTinyLFU(1000, time.Minute),
 			}),
 		},
 		WeatherHTTPClient: a.WeatherHTTPClient,
 	}
 
-	router.Get("/weather", handler.HandleFetchWeather)
+	router.Get("/weather", handler.HandleRetrieveWeather)
 	router.Get("/weather/cached", handler.HandleRetrieveCachedWeather)
 }

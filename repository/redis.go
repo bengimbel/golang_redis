@@ -29,7 +29,7 @@ func (rds *RedisRepo) Insert(ctx context.Context, weather model.WeatherResponse)
 	if err := rds.Cache.Set(&cache.Item{
 		Key:   key,
 		Value: weather,
-		TTL:   5 * time.Minute,
+		TTL:   10 * time.Minute,
 	}); err != nil {
 		return fmt.Errorf("failed to insert weather object to redis: %w", err)
 	}
@@ -48,4 +48,10 @@ func (rds *RedisRepo) FindByCity(ctx context.Context, city string) (model.Weathe
 	}
 
 	return weatherModel, nil
+}
+
+// Check if city is in redis cache.
+func (rds *RedisRepo) DoesKeyExist(ctx context.Context, city string) bool {
+	// Check cache if key exists
+	return rds.Cache.Exists(ctx, city)
 }

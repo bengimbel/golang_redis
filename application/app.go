@@ -10,6 +10,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const (
+	REDIS_ADDR  string = "redis:6379"
+	SERVER_ADDR string = ":8080"
+)
+
 type App struct {
 	Router            http.Handler
 	Rdb               *redis.Client
@@ -20,7 +25,7 @@ type App struct {
 func NewApp() *App {
 	app := &App{
 		Rdb: redis.NewClient(&redis.Options{
-			Addr: "redis:6379",
+			Addr: REDIS_ADDR,
 		}),
 		WeatherHTTPClient: httpWeatherClient.NewHttpClient(),
 	}
@@ -32,7 +37,7 @@ func NewApp() *App {
 // Start our App
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    SERVER_ADDR,
 		Handler: a.Router,
 	}
 
