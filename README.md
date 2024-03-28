@@ -1,1 +1,1 @@
-# Golang Redis API
+# Golang API with Redis Cache
