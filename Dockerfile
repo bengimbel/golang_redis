@@ -12,4 +12,3 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /go_redis_api
 EXPOSE 8080
 
 CMD ["/go_redis_api"]
-
