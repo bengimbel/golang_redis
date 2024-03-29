@@ -41,6 +41,11 @@ There are two endpoints in this application.
 1. `api/weather?city=<putCityHere>`
 2. `api/weather/cached?city=<putCityHere>`
 
+Full URL Example:
+
+1. `localhost:8080/api/weather?city=chicago`
+2. `localhost:8080/api/weather/cached?city=chicago`
+
 Successful Requests
 
 ```
