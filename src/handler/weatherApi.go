@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -63,7 +64,7 @@ func (wh *WeatherHandler) FetchCoordinates(config *httpWeatherClient.HttpConfig)
 	weatherCoordinates := []model.WeatherCoordinates{}
 
 	if err := wh.WeatherHTTPClient.MakeWeatherRequest(config, &weatherCoordinates); err != nil {
-		return weatherCoordinates, fmt.Errorf("Error fetching city coordinates by name: %w", err)
+		return weatherCoordinates, errors.New("Error fetching coordinates. Check if API key is valid.")
 	} else if len(weatherCoordinates) == 0 {
 		return weatherCoordinates, fmt.Errorf("Error fetching city coordinates by name: %s", config.Query[0].Value)
 	}

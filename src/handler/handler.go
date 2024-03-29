@@ -13,7 +13,7 @@ import (
 )
 
 type WeatherHandler struct {
-	Repo              *repository.RedisRepo
+	Repo              repository.RedisImplementor
 	WeatherHTTPClient *httpWeatherClient.HttpWeatherClient
 }
 
@@ -92,7 +92,7 @@ func (wh *WeatherHandler) HandleRetrieveCachedWeather(w http.ResponseWriter, r *
 	// Get results from redis cache
 	result, err := wh.RetrieveWeatherByCache(ctx, city)
 	if err != nil {
-		RenderInternalServerError(w, err)
+		RenderBadRequestError(w, err)
 		return
 	}
 

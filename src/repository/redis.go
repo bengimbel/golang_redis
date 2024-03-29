@@ -15,6 +15,11 @@ type genericError error
 
 var errorNotExist genericError = errors.New("Could not find city in redis cache")
 
+type RedisImplementor interface {
+	Insert(ctx context.Context, weather model.WeatherResponse) error
+	FindByCity(ctx context.Context, city string) (model.WeatherResponse, error)
+	DoesKeyExist(ctx context.Context, city string) bool
+}
 type RedisRepo struct {
 	Cache *cache.Cache
 }
