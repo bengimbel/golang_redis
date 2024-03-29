@@ -150,6 +150,6 @@ func (ws *WeatherService) RetrieveWeatherFromCache(ctx context.Context, city str
 // Function that wraps logic to interact with
 // redis cache and find results
 func (ws *WeatherService) DoesKeyExist(ctx context.Context, city string) bool {
-	// Finds city's weather by key
+	// Checks if key exists
 	return ws.Repo.DoesKeyExist(ctx, city)
 }
