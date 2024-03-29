@@ -54,3 +54,5 @@ Failure Requests
 curl --location 'localhost:8080/api/weather?city=cityDoesntExist'
 curl --location 'localhost:8080/api/weather/cached?city=cityDoesntExist'
 ```
+
+You can also use postman to send requests.
