@@ -9,6 +9,7 @@ import (
 
 	"github.com/bengimbel/go_redis_api/src/model"
 	"github.com/go-redis/cache/v9"
+	"github.com/redis/go-redis/v9"
 )
 
 type genericError error
@@ -22,6 +23,20 @@ type RedisImplementor interface {
 }
 type RedisRepo struct {
 	Cache *cache.Cache
+}
+
+// Setting Cache to use local in-process storage
+// to cache the small subset of recent keys.
+// Key/Values use LRU (least recently used)
+// for 1 minute in local in-process storage
+// before looking into the Redis Cache.
+func NewRedisRepo(rds *redis.Client) *RedisRepo {
+	return &RedisRepo{
+		Cache: cache.New(&cache.Options{
+			Redis:      rds,
+			LocalCache: cache.NewTinyLFU(1000, time.Minute),
+		}),
+	}
 }
 
 // Insert city weather into redis cache.

@@ -1,4 +1,4 @@
-package httpWeatherClient
+package httpClient
 
 import (
 	"encoding/json"
@@ -26,6 +26,10 @@ type HttpWeatherClient struct {
 	Client *http.Client
 	ApiKey string
 	URL    url.URL
+}
+
+type HttpImplementor interface {
+	MakeWeatherRequest(config *HttpConfig, responseStruct interface{}) error
 }
 
 // Create an instance of our client

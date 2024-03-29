@@ -3,102 +3,121 @@ package handler_test
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bengimbel/go_redis_api/src/errorPkg"
 	"github.com/bengimbel/go_redis_api/src/handler"
-	"github.com/bengimbel/go_redis_api/src/httpWeatherClient"
+	"github.com/bengimbel/go_redis_api/src/httpClient"
 	"github.com/bengimbel/go_redis_api/src/model"
+	"github.com/bengimbel/go_redis_api/src/repository"
 	"github.com/go-redis/cache/v9"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-type MockWeatherHandler struct {
-	Repo              *MockRedisRepo
-	WeatherHTTPClient *httpWeatherClient.HttpWeatherClient
+type MockHttpClient struct {
+	httpClient.HttpImplementor
+	mock.Mock
 }
 
 type MockRedisRepo struct {
 	Cache *cache.Cache
+	Repo  repository.RedisImplementor
+	mock.Mock
 }
 
-func (mds *MockRedisRepo) Insert(ctx context.Context, weather model.WeatherResponse) error {
-	return nil
+type MockService struct {
+	Repo              *MockRedisRepo
+	WeatherHTTPClient *MockHttpClient
+	mock.Mock
 }
 
-func (mds *MockRedisRepo) FindByCity(ctx context.Context, city string) (model.WeatherResponse, error) {
-	return model.WeatherResponse{
-		City: model.City{
-			Name: "Chicago",
-		},
-		List: []model.List{
-			{
-				Dt: 12345,
-			},
-		},
-	}, nil
+type MockWeatherHandler struct {
+	Service *MockService
 }
 
-func (mds *MockRedisRepo) DoesKeyExist(ctx context.Context, city string) bool {
-	return true
+func (ms *MockService) FetchCoordinates(config *httpClient.HttpConfig) ([]model.WeatherCoordinates, error) {
+	args := ms.Called(config)
+	return args.Get(0).([]model.WeatherCoordinates), args.Error(1)
 }
+func (ms *MockService) FetchWeatherByCity(config *httpClient.HttpConfig) (model.WeatherResponse, error) {
+	args := ms.Called(config)
+	return args.Get(0).(model.WeatherResponse), args.Error(1)
+}
+func (ms *MockService) RetrieveAndCacheWeather(ctx context.Context, city string) (model.WeatherResponse, error) {
+	args := ms.Called(ctx, city)
+	return args.Get(0).(model.WeatherResponse), args.Error(1)
+}
+func (ms *MockService) RetrieveWeatherFromCache(ctx context.Context, city string) (model.WeatherResponse, error) {
+	args := ms.Called(ctx, city)
+	return args.Get(0).(model.WeatherResponse), args.Error(1)
+}
+func (ms *MockService) DoesKeyExist(ctx context.Context, city string) bool {
+	args := ms.Called(ctx, city)
+	return args.Bool(0)
+}
+
+var mockService = &MockService{}
 
 var mockWeatherHandler = handler.WeatherHandler{
-	Repo:              &MockRedisRepo{},
-	WeatherHTTPClient: httpWeatherClient.NewHttpClient(),
+	Service: mockService,
 }
 
 func TestFetchWeatherFromApiSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/weather?city=chicago", nil)
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(mockWeatherHandler.HandleRetrieveWeather)
-	handler.ServeHTTP(rr, req)
+	ctx := context.Background()
 	expected := model.WeatherResponse{
 		City: model.City{
-			Name: "Chicago",
+			Name: "chicago",
 		},
 		List: []model.List{
 			{
-				Dt: 12345,
+				Dt: 123,
 			},
 		},
 	}
-	actual := model.WeatherResponse{}
-	jsonBody, _ := io.ReadAll(rr.Body)
-	err := json.Unmarshal(jsonBody, &actual)
-	if err != nil {
-		fmt.Println("Error decoding response to json", err)
-	}
 
-	assert.EqualValues(t, expected, actual)
-	assert.EqualValues(t, rr.Code, http.StatusOK)
-}
+	mockService.On("DoesKeyExist", ctx, "chicago").Return(false).Once()
+	mockService.On("RetrieveAndCacheWeather", ctx, "chicago").Return(expected, nil).Once()
 
-func TestFetchWeatherFromApiBadRequest(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/api/weather?city=unknowncity", nil)
-	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(mockWeatherHandler.HandleRetrieveWeather)
 	handler.ServeHTTP(rr, req)
-	// expected := model.WeatherResponse{
-	// 	// City: model.City{
-	// 	// 	Name: "Chicago",
-	// 	// },
-	// 	// List: []model.List{
-	// 	// 	{
-	// 	// 		Dt: 12345,
-	// 	// 	},
-	// 	// },
-	// }
+
 	actual := model.WeatherResponse{}
 	jsonBody, _ := io.ReadAll(rr.Body)
-	err := json.Unmarshal(jsonBody, &actual)
-	if err != nil {
-		fmt.Println("Error decoding response to json", err)
-	}
+	json.Unmarshal(jsonBody, &actual)
 
-	// assert.EqualValues(t, expected, actual)
-	assert.EqualValues(t, rr.Code, http.StatusBadGateway)
+	assert.EqualValues(t, expected, actual)
+	assert.EqualValues(t, http.StatusOK, rr.Code)
+}
+
+func TestFetchWeatherFromApiFailure(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/weather?city=unkowncity", nil)
+	rr := httptest.NewRecorder()
+	ctx := context.Background()
+	errorString := "Error fetching coordinates. Check if API key is valid."
+	expectedError := errors.New(errorString)
+	expected := errorPkg.Error{
+		Code:    400,
+		Message: errorString,
+	}
+	emptyWeather := model.WeatherResponse{}
+
+	mockService.On("DoesKeyExist", ctx, "unkowncity").Return(false).Once()
+	mockService.On("RetrieveAndCacheWeather", ctx, "unkowncity").Return(emptyWeather, expectedError).Once()
+
+	handler := http.HandlerFunc(mockWeatherHandler.HandleRetrieveWeather)
+	handler.ServeHTTP(rr, req)
+
+	actual := errorPkg.Error{}
+	jsonBody, _ := io.ReadAll(rr.Body)
+	json.Unmarshal(jsonBody, &actual)
+
+	assert.EqualValues(t, expected, actual)
+	assert.EqualValues(t, http.StatusBadRequest, rr.Code)
 }

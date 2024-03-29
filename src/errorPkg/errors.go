@@ -1,13 +1,8 @@
-package handler
+package errorPkg
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-)
-
-var (
-	ErrorInternalServerError error = errors.New("Internal Server Error")
 )
 
 type Error struct {

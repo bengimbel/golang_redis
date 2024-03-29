@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bengimbel/go_redis_api/src/httpWeatherClient"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -16,9 +15,8 @@ const (
 )
 
 type App struct {
-	Router            http.Handler
-	Rdb               *redis.Client
-	WeatherHTTPClient *httpWeatherClient.HttpWeatherClient
+	Router http.Handler
+	Rdb    *redis.Client
 }
 
 // Create a new App instance
@@ -27,7 +25,6 @@ func NewApp() *App {
 		Rdb: redis.NewClient(&redis.Options{
 			Addr: REDIS_ADDR,
 		}),
-		WeatherHTTPClient: httpWeatherClient.NewHttpClient(),
 	}
 	app.LoadApiRoutes()
 
