@@ -139,7 +139,7 @@ func TestFetchWeatherSuccess(t *testing.T) {
 	assert.EqualValues(t, expected, actual)
 }
 
-func TestRetrieveAndCacheWeatherSuccess(t *testing.T) {
+func TestRetrieveAndCacheWeatherAsyncSuccess(t *testing.T) {
 	ctx := context.Background()
 	expected := model.WeatherResponse{
 		City: model.City{
@@ -201,7 +201,7 @@ func TestRetrieveAndCacheWeatherSuccess(t *testing.T) {
 	})
 
 	mockRepo.On("Insert", ctx, expected).Return(nil).Once()
-	actual, _ := mockWeatherService.RetrieveAndCacheWeather(ctx, "chicago")
+	actual, _ := mockWeatherService.RetrieveAndCacheWeatherAsync(ctx, "chicago")
 
 	assert.EqualValues(t, expected, actual)
 }

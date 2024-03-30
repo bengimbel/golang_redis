@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -47,11 +48,11 @@ func (a *App) Start(ctx context.Context) error {
 	// Gracefully shut down redis.
 	defer func() {
 		if err := a.Rdb.Close(); err != nil {
-			fmt.Println("Failed to close redis", err)
+			log.Println("Failed to close redis", err)
 		}
 	}()
 
-	fmt.Println("Starting Server on port 8080")
+	log.Println("Starting Server on port 8080")
 
 	// Using buffered channel, only 1 error can happen here
 	channel := make(chan error, 1)

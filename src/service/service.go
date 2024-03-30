@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/bengimbel/go_redis_api/src/httpClient"
@@ -30,7 +31,7 @@ type WeatherService struct {
 type WeatherServiceImplementor interface {
 	FetchCoordinates(*httpClient.HttpConfig) ([]model.WeatherCoordinates, error)
 	FetchWeatherByCity(*httpClient.HttpConfig) (model.WeatherResponse, error)
-	RetrieveAndCacheWeather(context.Context, string) (model.WeatherResponse, error)
+	RetrieveAndCacheWeatherAsync(context.Context, string) (model.WeatherResponse, error)
 	RetrieveWeatherFromCache(context.Context, string) (model.WeatherResponse, error)
 	DoesKeyExist(context.Context, string) bool
 }
@@ -111,6 +112,30 @@ func (ws *WeatherService) FetchWeatherByCity(config *httpClient.HttpConfig) (mod
 	return weatherResponse, nil
 }
 
+// Function that will asynchronously add result to the redis cache
+func (ws *WeatherService) InsertToCacheAsync(ctx context.Context, weatherResponse model.WeatherResponse) error {
+	// Error channel to communicate the error back to the main function
+	errChannel := make(chan error, 1)
+
+	go func() {
+		if err := ws.Repo.Insert(ctx, weatherResponse); err != nil {
+			// If error, Sending error to channel
+			errChannel <- fmt.Errorf("error adding city weather to redis cache: %w", err)
+		} else {
+			log.Println("Successfully added city weather to redis cache")
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-errChannel:
+		return err
+	default:
+		return nil
+	}
+}
+
 // This wraps the two functions above, making sure that
 // coordinate request succeeds first before moving to the
 // second network request. We need to make two network requests
@@ -118,21 +143,26 @@ func (ws *WeatherService) FetchWeatherByCity(config *httpClient.HttpConfig) (mod
 // then using the lat lon we can fetch the weather.
 // If an error, we return the error with a empty struct.
 // If no error we return the results struct with nil as error.
-func (ws *WeatherService) RetrieveAndCacheWeather(ctx context.Context, city string) (model.WeatherResponse, error) {
-	if coordinates, err := ws.FetchCoordinates(BuildLatLonRequest(city)); err == nil && len(coordinates) > 0 {
-		if weatherResponse, err := ws.FetchWeatherByCity(BuildCityWeatherRequest(coordinates[0])); err == nil {
-			// If both above requests are successful,
-			// Insert result into redis cache.
-			if err := ws.Repo.Insert(ctx, weatherResponse); err != nil {
-				fmt.Println("Error adding city weather to redis cache", err)
-			}
-			return weatherResponse, nil
-		} else {
-			return model.WeatherResponse{}, err
-		}
-	} else {
+func (ws *WeatherService) RetrieveAndCacheWeatherAsync(ctx context.Context, city string) (model.WeatherResponse, error) {
+	coordinates, err := ws.FetchCoordinates(BuildLatLonRequest(city))
+	if err != nil {
 		return model.WeatherResponse{}, err
 	}
+	if len(coordinates) == 0 {
+		return model.WeatherResponse{}, err
+	}
+
+	weatherResponse, err := ws.FetchWeatherByCity(BuildCityWeatherRequest(coordinates[0]))
+	if err != nil {
+		return model.WeatherResponse{}, err
+	}
+	// If both above requests are successful,
+	// Insert result into redis cache asynchronously
+	if err := ws.InsertToCacheAsync(ctx, weatherResponse); err != nil {
+		log.Println(err)
+	}
+
+	return weatherResponse, nil
 }
 
 // Function that wraps logic to interact with
@@ -141,7 +171,7 @@ func (ws *WeatherService) RetrieveWeatherFromCache(ctx context.Context, city str
 	// Finds city's weather by key
 	weatherResponse, err := ws.Repo.FindByCity(ctx, city)
 	if err != nil {
-		fmt.Println("Error fetching city from redis cache", err)
+		log.Println("Error fetching city from redis cache", err)
 		return model.WeatherResponse{}, err
 	}
 	return weatherResponse, nil

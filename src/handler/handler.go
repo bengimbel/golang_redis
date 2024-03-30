@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -38,7 +38,7 @@ func (wh *WeatherHandler) HandleRetrieveWeather(w http.ResponseWriter, r *http.R
 		}
 		result = value
 	} else {
-		value, err := wh.Service.RetrieveAndCacheWeather(ctx, city)
+		value, err := wh.Service.RetrieveAndCacheWeatherAsync(ctx, city)
 		if err != nil {
 			errorPkg.RenderBadRequestError(w, err)
 			return
@@ -50,7 +50,7 @@ func (wh *WeatherHandler) HandleRetrieveWeather(w http.ResponseWriter, r *http.R
 	// render a general server error
 	response, err := json.Marshal(&result)
 	if err != nil {
-		fmt.Println("Error decoding response to json", err)
+		log.Println("Error decoding response to json", err)
 		errorPkg.RenderInternalServerError(w, err)
 		return
 	}
@@ -76,7 +76,7 @@ func (wh *WeatherHandler) HandleRetrieveCachedWeather(w http.ResponseWriter, r *
 	// render a general server error
 	response, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println("Error decoding response to json", err)
+		log.Println("Error decoding response to json", err)
 		errorPkg.RenderInternalServerError(w, err)
 		return
 	}

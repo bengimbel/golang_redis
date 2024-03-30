@@ -48,7 +48,7 @@ func (ms *MockService) FetchWeatherByCity(config *httpClient.HttpConfig) (model.
 	args := ms.Called(config)
 	return args.Get(0).(model.WeatherResponse), args.Error(1)
 }
-func (ms *MockService) RetrieveAndCacheWeather(ctx context.Context, city string) (model.WeatherResponse, error) {
+func (ms *MockService) RetrieveAndCacheWeatherAsync(ctx context.Context, city string) (model.WeatherResponse, error) {
 	args := ms.Called(ctx, city)
 	return args.Get(0).(model.WeatherResponse), args.Error(1)
 }
@@ -83,7 +83,7 @@ func TestFetchWeatherFromApiSuccess(t *testing.T) {
 	}
 
 	mockService.On("DoesKeyExist", ctx, "chicago").Return(false).Once()
-	mockService.On("RetrieveAndCacheWeather", ctx, "chicago").Return(expected, nil).Once()
+	mockService.On("RetrieveAndCacheWeatherAsync", ctx, "chicago").Return(expected, nil).Once()
 
 	handler := http.HandlerFunc(mockWeatherHandler.HandleRetrieveWeather)
 	handler.ServeHTTP(rr, req)
@@ -109,7 +109,7 @@ func TestFetchWeatherFromApiFailure(t *testing.T) {
 	emptyWeather := model.WeatherResponse{}
 
 	mockService.On("DoesKeyExist", ctx, "unkowncity").Return(false).Once()
-	mockService.On("RetrieveAndCacheWeather", ctx, "unkowncity").Return(emptyWeather, expectedError).Once()
+	mockService.On("RetrieveAndCacheWeatherAsync", ctx, "unkowncity").Return(emptyWeather, expectedError).Once()
 
 	handler := http.HandlerFunc(mockWeatherHandler.HandleRetrieveWeather)
 	handler.ServeHTTP(rr, req)
