@@ -34,6 +34,7 @@ type WeatherServiceImplementor interface {
 	RetrieveAndCacheWeatherAsync(context.Context, string) (model.WeatherResponse, error)
 	RetrieveWeatherFromCache(context.Context, string) (model.WeatherResponse, error)
 	DoesKeyExist(context.Context, string) bool
+	InsertToCacheAsync(context.Context, string, model.WeatherResponse) error
 }
 
 func NewWeatherService(rds *redis.Client) *WeatherService {
@@ -113,12 +114,13 @@ func (ws *WeatherService) FetchWeatherByCity(config *httpClient.HttpConfig) (mod
 }
 
 // Function that will asynchronously add result to the redis cache
-func (ws *WeatherService) InsertToCacheAsync(ctx context.Context, weatherResponse model.WeatherResponse) error {
+func (ws *WeatherService) InsertToCacheAsync(ctx context.Context, city string, weatherResponse model.WeatherResponse) error {
 	// Error channel to communicate the error back to the main function
 	errChannel := make(chan error, 1)
 
 	go func() {
-		if err := ws.Repo.Insert(ctx, weatherResponse); err != nil {
+		// Async insert to redis
+		if err := ws.Repo.Insert(ctx, city, weatherResponse); err != nil {
 			// If error, Sending error to channel
 			errChannel <- fmt.Errorf("error adding city weather to redis cache: %w", err)
 		} else {
@@ -144,6 +146,7 @@ func (ws *WeatherService) InsertToCacheAsync(ctx context.Context, weatherRespons
 // If an error, we return the error with a empty struct.
 // If no error we return the results struct with nil as error.
 func (ws *WeatherService) RetrieveAndCacheWeatherAsync(ctx context.Context, city string) (model.WeatherResponse, error) {
+	// Fetch lat and lon by city name
 	coordinates, err := ws.FetchCoordinates(BuildLatLonRequest(city))
 	if err != nil {
 		return model.WeatherResponse{}, err
@@ -152,13 +155,14 @@ func (ws *WeatherService) RetrieveAndCacheWeatherAsync(ctx context.Context, city
 		return model.WeatherResponse{}, err
 	}
 
+	// Fetch city's weather by lat and lon
 	weatherResponse, err := ws.FetchWeatherByCity(BuildCityWeatherRequest(coordinates[0]))
 	if err != nil {
 		return model.WeatherResponse{}, err
 	}
 	// If both above requests are successful,
 	// Insert result into redis cache asynchronously
-	if err := ws.InsertToCacheAsync(ctx, weatherResponse); err != nil {
+	if err := ws.InsertToCacheAsync(ctx, city, weatherResponse); err != nil {
 		log.Println(err)
 	}
 
@@ -171,7 +175,7 @@ func (ws *WeatherService) RetrieveWeatherFromCache(ctx context.Context, city str
 	// Finds city's weather by key
 	weatherResponse, err := ws.Repo.FindByCity(ctx, city)
 	if err != nil {
-		log.Println("Error fetching city from redis cache", err)
+		log.Println(err)
 		return model.WeatherResponse{}, err
 	}
 	return weatherResponse, nil

@@ -29,8 +29,8 @@ type MockService struct {
 	HttpClient *MockHttpClient
 }
 
-func (mds *MockRedisRepo) Insert(ctx context.Context, weather model.WeatherResponse) error {
-	args := mds.Called(ctx, weather)
+func (mds *MockRedisRepo) Insert(ctx context.Context, city string, weather model.WeatherResponse) error {
+	args := mds.Called(ctx, city, weather)
 	return args.Error(0)
 }
 
@@ -200,7 +200,7 @@ func TestRetrieveAndCacheWeatherAsyncSuccess(t *testing.T) {
 		}
 	})
 
-	mockRepo.On("Insert", ctx, expected).Return(nil).Once()
+	mockRepo.On("Insert", ctx, "chicago", expected).Return(nil).Once()
 	actual, _ := mockWeatherService.RetrieveAndCacheWeatherAsync(ctx, "chicago")
 
 	assert.EqualValues(t, expected, actual)

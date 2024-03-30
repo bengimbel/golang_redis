@@ -60,6 +60,10 @@ func (ms *MockService) DoesKeyExist(ctx context.Context, city string) bool {
 	args := ms.Called(ctx, city)
 	return args.Bool(0)
 }
+func (ms *MockService) InsertToCacheAsync(ctx context.Context, city string, weatherResponse model.WeatherResponse) error {
+	args := ms.Called(ctx, city, weatherResponse)
+	return args.Error(0)
+}
 
 var mockService = &MockService{}
 
