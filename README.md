@@ -34,6 +34,10 @@ The flow of this Application is as follows. Handlers will handle the incoming ne
 
 I built my own custom http client that is configured just for open weather map api. We also pass in a config and pointer to a response struct so we can just edit that value in memory.
 
+### How to improve this
+
+I think if we wanted to improve this application, we would asyncronously write to the cache. The flow could be the user fetches data that isn't in the cache, and we return the result from open weather map api. The results are written to the cache after the user already received the results making the process run asyncronously.
+
 ### Sample cURL Requests
 
 There are two endpoints in this application.
