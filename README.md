@@ -38,6 +38,8 @@ I built my own custom http client that is configured just for open weather map a
 
 I think if we wanted to improve this application, we would asyncronously write to the cache. The flow could be the user fetches data that isn't in the cache, and we return the result from open weather map api. The results are written to the cache after the user already received the results making the process run asyncronously.
 
+If traffic on this web app grows, we can implement distributed caching and even client side caching to further improve performance.
+
 ### Sample cURL Requests
 
 There are two endpoints in this application.
