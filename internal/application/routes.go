@@ -1,7 +1,7 @@
 package application
 
 import (
-	"github.com/bengimbel/go_redis_api/src/handler"
+	"github.com/bengimbel/go_redis_api/internal/handler"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 )

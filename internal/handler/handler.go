@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bengimbel/go_redis_api/src/errorPkg"
-	"github.com/bengimbel/go_redis_api/src/model"
-	"github.com/bengimbel/go_redis_api/src/service"
+	"github.com/bengimbel/go_redis_api/internal/model"
+	"github.com/bengimbel/go_redis_api/internal/service"
+	"github.com/bengimbel/go_redis_api/pkg/errorPkg"
 	"github.com/redis/go-redis/v9"
 )
 

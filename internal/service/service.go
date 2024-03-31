@@ -7,9 +7,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bengimbel/go_redis_api/src/httpClient"
-	"github.com/bengimbel/go_redis_api/src/model"
-	"github.com/bengimbel/go_redis_api/src/repository"
+	"github.com/bengimbel/go_redis_api/internal/model"
+	"github.com/bengimbel/go_redis_api/internal/repository"
+	"github.com/bengimbel/go_redis_api/pkg/httpClient"
 	"github.com/redis/go-redis/v9"
 )
 

@@ -2,19 +2,14 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/bengimbel/go_redis_api/src/model"
+	"github.com/bengimbel/go_redis_api/internal/model"
 	"github.com/go-redis/cache/v9"
 	"github.com/redis/go-redis/v9"
 )
-
-type genericError error
-
-var errorNotExist genericError = errors.New("Could not find city in redis cache")
 
 type RedisImplementor interface {
 	Insert(context.Context, string, model.WeatherResponse) error
@@ -63,7 +58,7 @@ func (rds *RedisRepo) FindByCity(ctx context.Context, city string) (model.Weathe
 
 	// Get city weather from redis cache using the city as a key.
 	if err := rds.Cache.Get(ctx, city, &weatherModel); err != nil {
-		return weatherModel, errorNotExist
+		return weatherModel, fmt.Errorf("Could not find city in redis cache: %s", city)
 	}
 
 	return weatherModel, nil
