@@ -9,7 +9,7 @@ NOTE: You will need an API KEY for this application to work successfully when fe
 1. Run `docker compose build`
 2. Run `docker compose up -d`
 
-You can also run Redis and monitor once the app is running by
+You can also run the redis-cli and monitor the cache once the app is running by
 
 1. Run `redis-cli`
 2. Run `MONITOR`
