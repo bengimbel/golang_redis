@@ -36,7 +36,7 @@ I built my own custom http client that is configured just for open weather map a
 
 ### How to improve this
 
-I think if we wanted to improve this application, If traffic on this web app grows, we can implement distributed caching and even client side caching to further improve performance. I am already caching values asyncronously, which was another assumption I made that would improve performance.
+I think if I wanted to extend this application as traffic grows, we can implement distributed caching and even client side caching to further improve performance. I am already caching values asyncronously, which was another assumption I made that would improve performance.
 
 ### Sample cURL Requests
 
