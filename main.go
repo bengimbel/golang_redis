@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -19,6 +19,6 @@ func main() {
 
 	err := app.Start(ctx)
 	if err != nil {
-		fmt.Println("Failed to start app", err)
+		log.Println("Failed to start app", err)
 	}
 }
