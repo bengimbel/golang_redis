@@ -40,6 +40,8 @@ I built my own custom http client that is configured just for open weather map a
 
 I think if I wanted to extend this application as traffic grows, we can implement distributed caching and even client side caching to further improve performance. I am already caching values asyncronously, which was another assumption I made that would improve performance. Also creating multiple instances of redis via a redis cluster to split the dataset among multiple nodes.
 
+I also would not return an error if no results are found. For the sake of this project, I just wanted to show how errors would be handled. No results should still return a `200`.
+
 ### Sample cURL Requests
 
 There are two endpoints in this application. You can also use postman to send requests.
