@@ -42,17 +42,17 @@ I think if I wanted to extend this application as traffic grows, we can implemen
 
 ### Sample cURL Requests
 
-There are two endpoints in this application.
+There are two endpoints in this application. You can also use postman to send requests.
 
 1. `api/weather?city=<putCityHere>`
 2. `api/weather/cached?city=<putCityHere>`
 
-Full URL Example:
+#### Full URL Example:
 
 1. `localhost:8080/api/weather?city=chicago`
 2. `localhost:8080/api/weather/cached?city=chicago`
 
-Successful Requests
+#### Successful Requests
 
 ```
 curl --location 'localhost:8080/api/weather?city=chicago'
@@ -64,11 +64,9 @@ curl --location 'localhost:8080/api/weather/cached?city=chicago'
 curl --location 'localhost:8080/api/weather/cached?city=miami'
 ```
 
-Failure Requests
+#### No Results Requests
 
 ```
 curl --location 'localhost:8080/api/weather?city=cityDoesntExist'
 curl --location 'localhost:8080/api/weather/cached?city=cityDoesntExist'
 ```
-
-You can also use postman to send requests.
