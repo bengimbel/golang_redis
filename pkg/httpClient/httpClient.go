@@ -22,7 +22,7 @@ type HttpConfig struct {
 	Query []QueryParams
 }
 
-type HttpWeatherClient struct {
+type HttpClient struct {
 	Client *http.Client
 	ApiKey string
 	URL    url.URL
@@ -33,8 +33,8 @@ type HttpImplementor interface {
 }
 
 // Create an instance of our client
-func NewHttpClient() *HttpWeatherClient {
-	return &HttpWeatherClient{
+func NewHttpClient() *HttpClient {
+	return &HttpClient{
 		Client: &http.Client{},
 		URL: url.URL{
 			Scheme: HTTPS,
@@ -49,7 +49,7 @@ func NewHttpClient() *HttpWeatherClient {
 // Since we are passing in pointer to the response struct, that address in memory is
 // filled in with results, and we don't need to return it. We only return an error
 // if there is one.
-func (hwc *HttpWeatherClient) MakeWeatherRequest(config *HttpConfig, responseStruct interface{}) error {
+func (hwc *HttpClient) MakeWeatherRequest(config *HttpConfig, responseStruct interface{}) error {
 	query := url.Values{}
 
 	// Loop over config query values and set them to url.Values{}
