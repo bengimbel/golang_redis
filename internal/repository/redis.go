@@ -38,7 +38,7 @@ func NewRedisRepo(rds *redis.Client) *RedisRepo {
 func (rds *RedisRepo) Insert(ctx context.Context, city string, weather model.WeatherResponse) error {
 	// Save city name as key
 	key := strings.ToLower(city)
-	// Redis cache saves values for 5 minutes.
+	// Redis cache saves values for 10 minutes.
 	// Return an error if there is one
 	if err := rds.Cache.Set(&cache.Item{
 		Key:   key,
